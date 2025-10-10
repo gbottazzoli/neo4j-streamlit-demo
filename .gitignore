@@ -1,0 +1,7 @@
+# Python
+__pycache__/
+*.pyc
+
+# Secrets locaux éventuels
+.secrets.toml
+.env

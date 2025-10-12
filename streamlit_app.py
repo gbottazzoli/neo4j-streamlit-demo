@@ -1,134 +1,205 @@
+# streamlit_app.py
+# Agent Conversationnel Neo4j Aura + Streamlit
+# Documentation: https://neo4j.com/developer/genai-ecosystem/aura-agent/
+
 import streamlit as st
-import pandas as pd
-from neo4j_helpers import Neo4jClient
-from pyvis.network import Network
-import os
-import tempfile
-from streamlit.components.v1 import html
+import requests
+from typing import Optional
 
-st.set_page_config(page_title="Neo4j Aura Demo", page_icon="🕸️", layout="wide")
+# -------------------------
+# Configuration page
+# -------------------------
+st.set_page_config(
+    page_title="Agent Archives Suisses",
+    page_icon="🤖",
+    layout="wide",
+)
 
-st.title("🕸️ Neo4j Aura • Demo Streamlit")
-st.caption("Connexion TLS (neo4j+s), requêtes paramétrées et visualisation rapide.")
+# -------------------------
+# En-tête
+# -------------------------
+st.title("🤖 Agent Conversationnel - Archives Diplomatiques Suisses")
+st.caption("Base de connaissances Neo4j • Période 1940-1945 • Réponses en 15-45 secondes")
 
-# 1) Secrets (configurés côté Cloud: st.secrets["..."])
-AURA_URI = st.secrets.get("AURA_URI", "")
-AURA_USER = st.secrets.get("AURA_USER", "")
-AURA_PASSWORD = st.secrets.get("AURA_PASSWORD", "")
+# -------------------------
+# Secrets & configuration
+# -------------------------
+AGENT_ENDPOINT = st.secrets.get("AGENT_ENDPOINT", "")
+CLIENT_ID = st.secrets.get("CLIENT_ID", "")
+CLIENT_SECRET = st.secrets.get("CLIENT_SECRET", "")
 
-if not (AURA_URI and AURA_USER and AURA_PASSWORD):
-    st.error("Secrets manquants. Configure AURA_URI, AURA_USER, AURA_PASSWORD dans les secrets.")
+if not (AGENT_ENDPOINT and CLIENT_ID and CLIENT_SECRET):
+    st.error(
+        "⚠️ Configuration manquante.\n\n"
+        "Ajoute dans Settings → Secrets :\n\n"
+        '```toml\n'
+        'AGENT_ENDPOINT = "https://api.neo4j.io/v2beta1/projects/.../agents/.../invoke"\n'
+        'CLIENT_ID = "ton_client_id"\n'
+        'CLIENT_SECRET = "ton_client_secret"\n'
+        '```\n\n'
+        'Obtiens CLIENT_ID et CLIENT_SECRET depuis : **Neo4j Aura Console → User Profile → API Keys**'
+    )
     st.stop()
 
-# 2) Connexion (mise en cache pour éviter reconnecter à chaque interaction)
-@st.cache_resource
-def get_client():
-    return Neo4jClient(uri=AURA_URI, user=AURA_USER, password=AURA_PASSWORD)
 
-client = get_client()
+# -------------------------
+# Fonction : Obtenir Bearer Token
+# -------------------------
+@st.cache_data(ttl=3600)  # Cache 1h
+def get_bearer_token(client_id: str, client_secret: str) -> Optional[str]:
+    """Obtient un bearer token OAuth2 depuis Neo4j Aura API"""
+    try:
+        response = requests.post(
+            'https://api.neo4j.io/oauth/token',
+            auth=(client_id, client_secret),
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
+            data={'grant_type': 'client_credentials'},
+            timeout=10
+        )
 
-# 3) Panneau latéral: requête prédéfinie + paramètres
-st.sidebar.header("Requête d'exemple")
-st.sidebar.write("Filtre simple sur label et limite.")
-node_label = st.sidebar.text_input("Label de nœud", value="Person")
-limit = st.sidebar.slider("Limite", min_value=5, max_value=200, value=50, step=5)
+        if response.status_code == 200:
+            return response.json().get('access_token')
+        else:
+            st.error(f"❌ Erreur OAuth ({response.status_code}): {response.text}")
+            return None
+    except Exception as e:
+        st.error(f"❌ Erreur d'authentification: {str(e)}")
+        return None
 
-default_cypher = f"""
-MATCH (n:{node_label})
-WITH n LIMIT $limit
-OPTIONAL MATCH (n)-[r]-(m)
-RETURN n AS node, type(r) AS rel_type, m AS neighbor
-"""
 
-cypher = st.text_area("Cypher (éditable)", value=default_cypher, height=200, help="Tu peux modifier la requête.")
-params = {"limit": limit}
+# -------------------------
+# Initialiser historique
+# -------------------------
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-# 4) Exécution
-col1, col2 = st.columns([1,1])
-with col1:
-    if st.button("▶️ Exécuter la requête"):
-        try:
-            rows = client.query(cypher, params)
-            st.session_state["rows"] = rows
-            st.success(f"{len(rows)} lignes renvoyées.")
-        except Exception as e:
-            st.error(f"Erreur: {e}")
+# -------------------------
+# Sidebar : Instructions
+# -------------------------
+with st.sidebar:
+    st.header("📚 Guide d'utilisation")
 
-rows = st.session_state.get("rows", [])
+    st.subheader("🎯 Questions types")
+    st.markdown("""
+    **Biographie simple**
+    - Qui est Elisabeth Müller ?
+    - Donne la biographie de Marcel Nussbaumer
 
-# 5) Affichage tabulaire
-with col1:
-    if rows:
-        # Flatten basique: extraire propriétés des nodes si présents
-        def node_props(n):
-            if not n: return {}
-            return dict(n.items()) if hasattr(n, "items") else dict(n)
-        data = []
-        for r in rows:
-            node = r.get("node")
-            neighbor = r.get("neighbor")
-            rel_type = r.get("rel_type")
-            data.append({
-                "node_id": node.element_id if node is not None else None,
-                "node_labels": ":".join(node.labels) if node is not None else None,
-                **node_props(node),
-                "rel_type": rel_type,
-                "neighbor_id": neighbor.element_id if neighbor is not None else None,
-                "neighbor_labels": ":".join(neighbor.labels) if neighbor is not None else None,
-                **{f"neighbor_{k}": v for k, v in node_props(neighbor).items()}
-            })
-        df = pd.DataFrame(data)
-        st.dataframe(df, use_container_width=True)
+    **Parcours de persécution**
+    - Quel est le parcours de persécution de Müller ?
+    - Décris les événements de Nussbaumer
 
-# 6) Visualisation graphe (pyvis)
-with col2:
-    if rows:
-        net = Network(height="650px", width="100%", directed=False, notebook=False)
-        net.toggle_physics(True)
+    **Comparaison**
+    - Compare Müller et Nussbaumer
+    - Différences entre Müller et de Pury ?
 
-        seen = set()
-        for r in rows:
-            n = r.get("node")
-            m = r.get("neighbor")
-            rel = r.get("rel_type")
+    **Exploration**
+    - Quelles personnes sont disponibles ?
+    - Y a-t-il plusieurs de Pury ?
+    """)
 
-            if n is not None:
-                nid = n.element_id
-                if nid not in seen:
-                    net.add_node(nid, label=":".join(n.labels) or "Node",
-                                 title=str(dict(n.items())))
-                    seen.add(nid)
+    st.divider()
 
-            if m is not None:
-                mid = m.element_id
-                if mid not in seen:
-                    net.add_node(mid, label=":".join(m.labels) or "Node",
-                                 title=str(dict(m.items())))
-                    seen.add(mid)
+    if st.button("🗑️ Effacer l'historique"):
+        st.session_state.messages = []
+        st.rerun()
 
-                if n is not None:
-                    net.add_edge(n.element_id, m.element_id, label=rel or "")
+    st.divider()
 
-        # pyvis écrit un HTML qu'on ré-injecte dans Streamlit
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".html") as tmp:
-            net.show(tmp.name)
-            html_data = open(tmp.name, "r", encoding="utf-8").read()
-        html(html_data, height=650, scrolling=True)
+    st.caption("""
+    **⏱️ Temps de réponse** : 15-45 sec (normal)
 
+    **🔍 Sources** : ~50 personnes documentées
+
+    **📊 Flags sources** :
+    - Pas de flag = source 1940-1945 ✅
+    - (reconstruction) = source 1946+ ⚠️
+    """)
+
+# -------------------------
+# Afficher l'historique des messages
+# -------------------------
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# -------------------------
+# Input utilisateur
+# -------------------------
+if user_input := st.chat_input("Pose ta question ici... (ex: Qui est Elisabeth Müller ?)"):
+
+    # Afficher la question de l'utilisateur
+    st.session_state.messages.append({"role": "user", "content": user_input})
+    with st.chat_message("user"):
+        st.markdown(user_input)
+
+    # Appeler l'API Neo4j Aura Agent
+    with st.chat_message("assistant"):
+        with st.spinner("🔍 Recherche en cours... (15-45 sec)"):
+
+            # 1. Obtenir le bearer token
+            bearer_token = get_bearer_token(CLIENT_ID, CLIENT_SECRET)
+
+            if not bearer_token:
+                error_msg = "❌ Impossible d'obtenir le token d'authentification. Vérifie CLIENT_ID et CLIENT_SECRET."
+                st.error(error_msg)
+                st.session_state.messages.append({"role": "assistant", "content": error_msg})
+            else:
+                try:
+                    # 2. Appeler l'agent avec le token
+                    response = requests.post(
+                        AGENT_ENDPOINT,
+                        headers={
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'Authorization': f'Bearer {bearer_token}'
+                        },
+                        json={'input': user_input},  # ← IMPORTANT: "input" pas "message"
+                        timeout=60
+                    )
+
+                    if response.status_code == 200:
+                        data = response.json()
+
+                        # Extraire la réponse (adapter selon structure)
+                        answer = (
+                                data.get("output") or
+                                data.get("response") or
+                                data.get("result") or
+                                str(data)
+                        )
+
+                        st.markdown(answer)
+                        st.session_state.messages.append({"role": "assistant", "content": answer})
+
+                    elif response.status_code == 401:
+                        error_msg = "🔑 Token expiré ou invalide. Réessaie (le cache va se rafraîchir)."
+                        st.error(error_msg)
+                        st.cache_data.clear()  # Clear cache du token
+                        st.session_state.messages.append({"role": "assistant", "content": error_msg})
+
+                    elif response.status_code == 404:
+                        error_msg = "🔍 Agent non trouvé. Vérifie l'URL de l'endpoint."
+                        st.error(error_msg)
+                        st.session_state.messages.append({"role": "assistant", "content": error_msg})
+
+                    else:
+                        error_msg = f"❌ Erreur API ({response.status_code}): {response.text[:200]}"
+                        st.error(error_msg)
+                        st.session_state.messages.append({"role": "assistant", "content": error_msg})
+
+                except requests.Timeout:
+                    timeout_msg = "⏱️ Timeout (>60 sec). L'agent met trop de temps. Réessaie avec une question plus simple."
+                    st.warning(timeout_msg)
+                    st.session_state.messages.append({"role": "assistant", "content": timeout_msg})
+
+                except Exception as e:
+                    error_msg = f"❌ Erreur: {str(e)}"
+                    st.error(error_msg)
+                    st.session_state.messages.append({"role": "assistant", "content": error_msg})
+
+# -------------------------
+# Footer
+# -------------------------
 st.divider()
-st.subheader("Requêtes de démonstration (copier-coller)")
-st.code("""
--- 1) Compter des nœuds par label
-MATCH (n) RETURN labels(n) AS labels, count(*) AS cnt ORDER BY cnt DESC;
-
--- 2) Chercher des personnes par nom
-MATCH (p:Person)
-WHERE toLower(p.prefLabel_fr) CONTAINS toLower($q)
-RETURN p LIMIT 25;
-
--- 3) Sous-graphe local autour d'une personne (par id stable)
-MATCH (p:Person {id: $person_id})-[r]-(x)
-RETURN p AS node, type(r) AS rel_type, x AS neighbor LIMIT 200;
-""", language="cypher")
-
-st.caption("Astuce : garde toujours tes requêtes **paramétrées** (pas de concat de strings).")
+st.caption("💡 Documentation: https://neo4j.com/developer/genai-ecosystem/aura-agent/")

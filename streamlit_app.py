@@ -100,6 +100,8 @@ with st.sidebar:
 
     st.divider()
 
+    show_debug = st.checkbox("🔍 Mode debug (afficher JSON brut)", value=False)
+
     if st.button("🗑️ Effacer l'historique"):
         st.session_state.messages = []
         st.rerun()
@@ -154,23 +156,35 @@ if user_input := st.chat_input("Pose ta question ici... (ex: Qui est Elisabeth M
                             'Accept': 'application/json',
                             'Authorization': f'Bearer {bearer_token}'
                         },
-                        json={'input': user_input},  # ← IMPORTANT: "input" pas "message"
+                        json={'input': user_input},
                         timeout=60
                     )
 
                     if response.status_code == 200:
                         data = response.json()
 
-                        # Extraire la réponse (adapter selon structure)
-                        answer = (
-                                data.get("output") or
-                                data.get("response") or
-                                data.get("result") or
-                                str(data)
-                        )
+                        # Extraire la réponse finale propre
+                        answer = None
 
+                        if isinstance(data.get('content'), list):
+                            # Chercher le dernier élément avec type='text'
+                            for item in reversed(data['content']):
+                                if item.get('type') == 'text':
+                                    answer = item.get('text')
+                                    break
+
+                        # Fallback si structure différente
+                        if not answer:
+                            answer = data.get('output') or data.get('response') or "❌ Format de réponse inattendu"
+
+                        # Afficher la réponse propre
                         st.markdown(answer)
                         st.session_state.messages.append({"role": "assistant", "content": answer})
+
+                        # Mode debug optionnel
+                        if show_debug:
+                            with st.expander("🔍 Réponse JSON complète (debug)"):
+                                st.json(data)
 
                     elif response.status_code == 401:
                         error_msg = "🔑 Token expiré ou invalide. Réessaie (le cache va se rafraîchir)."
@@ -202,4 +216,5 @@ if user_input := st.chat_input("Pose ta question ici... (ex: Qui est Elisabeth M
 # Footer
 # -------------------------
 st.divider()
-st.caption("💡 Documentation: https://neo4j.com/developer/genai-ecosystem/aura-agent/")
+st.caption(
+    "💡 Projet de recherche - Archives diplomatiques suisses 1940-1945 • Documentation: https://neo4j.com/developer/genai-ecosystem/aura-agent/")

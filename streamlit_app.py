@@ -266,7 +266,7 @@ with st.sidebar:
     """)
 
 # -------------------------
-# Container pour l'historique (scrollable)
+# Container pour l'historique
 # -------------------------
 chat_container = st.container()
 
@@ -276,29 +276,30 @@ with chat_container:
             st.markdown(message["content"])
 
 # -------------------------
-# Input utilisateur (TOUJOURS VISIBLE)
+# LOGIQUE CORRIGÉE : Traiter pending_query AVANT l'input
 # -------------------------
-user_input = st.chat_input("💬 Pose ta question ici... (ou clique sur un exemple dans le menu)")
+query_to_process = None
 
-# -------------------------
-# Traitement requête depuis bouton
-# -------------------------
+# Vérifier si une query est en attente depuis un bouton
 if "pending_query" in st.session_state:
-    user_input = st.session_state.pending_query
+    query_to_process = st.session_state.pending_query
     del st.session_state.pending_query
-    st.rerun()
+
+# Sinon, prendre l'input utilisateur manuel
+if not query_to_process:
+    query_to_process = st.chat_input("💬 Pose ta question ici... (ou clique sur un exemple dans le menu)")
 
 # -------------------------
 # Traitement de la requête
 # -------------------------
-if user_input:
+if query_to_process:
 
     # Afficher la question de l'utilisateur
-    st.session_state.messages.append({"role": "user", "content": user_input})
+    st.session_state.messages.append({"role": "user", "content": query_to_process})
 
     with chat_container:
         with st.chat_message("user"):
-            st.markdown(user_input)
+            st.markdown(query_to_process)
 
     # Appeler l'API
     with chat_container:
@@ -320,7 +321,7 @@ if user_input:
                                 'Accept': 'application/json',
                                 'Authorization': f'Bearer {bearer_token}'
                             },
-                            json={'input': user_input},
+                            json={'input': query_to_process},
                             timeout=60
                         )
 

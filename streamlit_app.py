@@ -1,5 +1,5 @@
 # streamlit_app.py
-# Version 0.1 - Interface GraphRAG Tools Diplomatiques
+# Version 0.1.2 - Interface GraphRAG Tools Diplomatiques
 # Auteur: Gérard Bottazzoli (gerard.bottazzoli@etu.unidistance.ch)
 
 import streamlit as st
@@ -10,24 +10,16 @@ from typing import Optional
 # Configuration page
 # -------------------------
 st.set_page_config(
-    page_title="GraphRAG Archives Suisses v0.1",
+    page_title="Agent Neo4j Archives Suisses v0.1.2",
     page_icon="🤖",
     layout="wide",
 )
 
 # -------------------------
-# En-tête académique
+# En-tête sobre
 # -------------------------
-st.title("🤖 Agent Conversationnel - Archives Diplomatiques Suisses")
-st.subheader("Des modèles de langage au service des questions de recherche")
-st.caption("Cas d'étude sur des archives diplomatiques (1940-1945)")
-
-col1, col2 = st.columns([3, 1])
-with col1:
-    st.markdown("**Auteur** : Gérard Bottazzoli • **Contact** : gerard.bottazzoli@etu.unidistance.ch")
-with col2:
-    st.markdown("**Version** : 0.1")
-
+st.title("🤖 Agent conversationnel sur Graph Neo4j")
+st.caption("Phase de test • Version 0.1.2")
 st.divider()
 
 # -------------------------
@@ -276,7 +268,7 @@ with chat_container:
             st.markdown(message["content"])
 
 # -------------------------
-# LOGIQUE CORRIGÉE : Traiter pending_query AVANT l'input
+# LOGIQUE : Traiter pending_query AVANT l'input
 # -------------------------
 query_to_process = None
 
@@ -368,17 +360,22 @@ if query_to_process:
                         st.session_state.messages.append({"role": "assistant", "content": error_msg})
 
 # -------------------------
-# Footer académique
+# ESPACE AVANT LE FOOTER (pour visibilité du chat input)
+# -------------------------
+st.markdown("<br><br><br>", unsafe_allow_html=True)
+
+# -------------------------
+# Footer académique complet
 # -------------------------
 st.divider()
 st.markdown("""
-<div style='text-align: center; color: #666; font-size: 0.9em;'>
-    <strong>GraphRAG Tools Diplomatiques v0.1</strong><br>
+<div style='text-align: center; color: #666; font-size: 0.85em; padding: 20px 0;'>
+    <strong>GraphRAG Tools Diplomatiques v0.1.2</strong><br>
     Des modèles de langage au service des questions de recherche<br>
     Cas d'étude sur des archives diplomatiques (1940-1945)<br>
     <br>
-    Auteur: <strong>Gérard Bottazzoli</strong> • Contact: <a href='mailto:gerard.bottazzoli@etu.unidistance.ch'>gerard.bottazzoli@etu.unidistance.ch</a><br>
+    <strong>Auteur:</strong> Gérard Bottazzoli • <strong>Contact:</strong> <a href='mailto:gerard.bottazzoli@etu.unidistance.ch'>gerard.bottazzoli@etu.unidistance.ch</a><br>
     <br>
-    13 tools opérationnels • Recherche multilingue FR/DE/EN • Neo4j Aura + Claude Sonnet 4.5
+    <em>13 tools opérationnels • Recherche multilingue FR/DE/EN • Neo4j Aura + Claude Sonnet 4.5</em>
 </div>
 """, unsafe_allow_html=True)

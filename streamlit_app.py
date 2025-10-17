@@ -1,5 +1,5 @@
 # streamlit_app.py
-# Version 0.1.3 - Interface GraphRAG Tools Diplomatiques
+# Version 0.1.4 - Interface GraphRAG Tools Diplomatiques - Ergonomie améliorée
 # Auteur: Gérard Bottazzoli (gerard.bottazzoli@etu.unidistance.ch)
 
 import streamlit as st
@@ -10,7 +10,7 @@ from typing import Optional
 # Configuration page
 # -------------------------
 st.set_page_config(
-    page_title="Agent Neo4j Archives Suisses v0.1.3",
+    page_title="Agent Neo4j Archives Suisses v0.1.4",
     page_icon="🤖",
     layout="wide",
 )
@@ -19,7 +19,7 @@ st.set_page_config(
 # En-tête sobre
 # -------------------------
 st.title("🤖 Agent conversationnel sur Graph Neo4j")
-st.caption("Phase de test • Version 0.1.3")
+st.caption("Phase de test • Version 0.1.4")
 
 # -------------------------
 # DISCLAIMER EXPERIMENTAL
@@ -79,190 +79,166 @@ if "show_debug" not in st.session_state:
     st.session_state.show_debug = False
 
 # -------------------------
-# Sidebar : Menu Optimisé
+# Sidebar : Menu Optimisé v2
 # -------------------------
 with st.sidebar:
     # ===========================
-    # HEADER : Titre du projet
+    # HEADER COMPACT
     # ===========================
-    st.markdown("### 🤖 Chatbot de démonstration")
+    st.markdown("### 🤖 Archives diplomatiques 1940-1945")
+    st.caption("*Graph RAG avec historian-in-the-loop*")
 
+    st.divider()
+
+    # ===========================
+    # 💡 CONSEIL PRINCIPAL
+    # ===========================
     st.markdown("""
-    **Des archives fédérales à la base de données**
-
-    *Flux de travail numériques avec modèles de langage (locaux) et Graph RAG*
-
-    **Une approche historian-in-the-loop**
-    """)
-
-    st.markdown("---")
-
-    # ===========================
-    # GUIDE DES REQUÊTES
-    # ===========================
-    st.header("📖 Guide des Requêtes")
-    st.caption("Clique sur un exemple pour le tester")
-
-    st.markdown("""
-    💡 **Conseil important** : Répétez toujours le nom complet dans vos questions pour éviter les ambiguïtés.
+    💡 **Toujours préciser le nom complet**
 
     ✅ "Détails sur 1942 pour Elisabeth Müller"  
     ❌ "Détails sur 1942" (peut perdre le contexte)
     """)
 
-    categorie = st.selectbox(
-        "🎯 Choisir une fonctionnalité",
-        [
-            "📚 Parcours individuels",
-            "🔗 Chaînes de communication",
-            "🔍 Recherche thématique",
-            "📊 Analyses globales",
-            "⚖️ Comparaisons"
-        ]
-    )
+    st.divider()
+
+    # ===========================
+    # 🔥 REQUÊTES RAPIDES (TOP 5)
+    # ===========================
+    st.markdown("### 🔥 Exemples rapides")
+
+    if st.button("📖 Biographie Müller", key="quick_bio", use_container_width=True):
+        st.session_state.pending_query = "Donne-moi la biographie d'Elisabeth Müller"
+
+    if st.button("🎯 Parcours complet Müller", key="quick_parcours", use_container_width=True):
+        st.session_state.pending_query = "Décris le parcours de persécution d'Elisabeth Müller"
+
+    if st.button("📊 Chaîne communication Müller", key="quick_chaine", use_container_width=True):
+        st.session_state.pending_query = "Chaîne de communication pour Elisabeth Müller"
+
+    if st.button("📅 Détails 1942 Müller", key="quick_1942", use_container_width=True):
+        st.session_state.pending_query = "Montre-moi les détails de 1942 pour Elisabeth Müller"
+
+    if st.button("🔍 Garde-meuble", key="quick_garde", use_container_width=True):
+        st.session_state.pending_query = "Trouve des infos sur les frais de garde-meuble"
 
     st.divider()
 
     # ===========================
-    # PARCOURS INDIVIDUELS
+    # 📚 GUIDE COMPLET (COLLAPSIBLE)
     # ===========================
-    if categorie == "📚 Parcours individuels":
-        st.markdown("### 📚 Parcours de persécution")
+    with st.expander("📚 Toutes les requêtes disponibles"):
 
-        st.markdown("**🔵 Elisabeth Müller**")
-        if st.button("📖 Biographie", key="bio_muller", use_container_width=True):
-            st.session_state.pending_query = "Donne-moi la biographie d'Elisabeth Müller"
-        if st.button("🎯 Parcours complet", key="parcours_muller", use_container_width=True):
-            st.session_state.pending_query = "Décris le parcours de persécution d'Elisabeth Müller"
+        st.markdown("#### 👤 Parcours individuels")
 
-        st.markdown("**🔵 Autres personnes**")
-        if st.button("📖 Nussbaumer", key="bio_nuss", use_container_width=True):
-            st.session_state.pending_query = "Qui est Marcel Nussbaumer ?"
-        if st.button("📖 de Pury", key="bio_pury", use_container_width=True):
-            st.session_state.pending_query = "Qui est Gérard de Pury ?"
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("📖 Bio Nussbaumer", key="bio_nuss", use_container_width=True):
+                st.session_state.pending_query = "Qui est Marcel Nussbaumer ?"
+        with col2:
+            if st.button("📖 Bio de Pury", key="bio_pury", use_container_width=True):
+                st.session_state.pending_query = "Qui est Gérard de Pury ?"
 
-    # ===========================
-    # CHAÎNES DE COMMUNICATION
-    # ===========================
-    elif categorie == "🔗 Chaînes de communication":
-        st.markdown("### 🔗 Correspondances")
+        st.markdown("#### 📅 Périodes spécifiques")
 
-        if st.button("📊 Chaîne Müller", key="chaine_muller", use_container_width=True):
-            st.session_state.pending_query = "Chaîne de communication pour Elisabeth Müller"
-        if st.button("📅 Détails 1942", key="1942", use_container_width=True):
-            st.session_state.pending_query = "Montre-moi les détails de 1942 pour Elisabeth Müller"
-        if st.button("📅 Avril 1942", key="avril_1942", use_container_width=True):
-            st.session_state.pending_query = "Détails sur avril 1942 pour Elisabeth Müller"
-        if st.button("📅 Détails 1943", key="1943", use_container_width=True):
-            st.session_state.pending_query = "Montre-moi 1943 pour Elisabeth Müller"
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("📅 Avril 1942", key="avril_42", use_container_width=True):
+                st.session_state.pending_query = "Détails sur avril 1942 pour Elisabeth Müller"
+        with col2:
+            if st.button("📅 Année 1943", key="annee_43", use_container_width=True):
+                st.session_state.pending_query = "Montre-moi 1943 pour Elisabeth Müller"
 
-    # ===========================
-    # RECHERCHE THÉMATIQUE
-    # ===========================
-    elif categorie == "🔍 Recherche thématique":
-        st.markdown("### 🔍 Mots-clés")
+        st.markdown("#### 🔍 Recherches thématiques")
 
-        if st.button("🔍 Garde-meuble", key="garde_meuble", use_container_width=True):
-            st.session_state.pending_query = "Trouve des infos sur les frais de garde-meuble"
-        if st.button("🔍 Möbellager (DE)", key="mobellager", use_container_width=True):
+        if st.button("🔍 Möbellager (DE)", key="mobel", use_container_width=True):
             st.session_state.pending_query = "Trouve des chaînes sur Möbellager"
-        if st.button("🔗 Chaîne garde-meuble", key="chaine_garde", use_container_width=True):
-            st.session_state.pending_query = "Reconstitue la chaîne pour Elisabeth Müller sur les frais de garde-meuble"
+
         if st.button("💰 Argent", key="argent", use_container_width=True):
             st.session_state.pending_query = "Trouve des chaînes mentionnant de l'argent"
-        if st.button("⚖️ Condamnation", key="condamnation", use_container_width=True):
+
+        if st.button("⚖️ Condamnations", key="condamn", use_container_width=True):
             st.session_state.pending_query = "Trouve des infos sur les condamnations"
-        if st.button("🔒 Prison", key="prison", use_container_width=True):
+
+        if st.button("🔐 Prisons", key="prison", use_container_width=True):
             st.session_state.pending_query = "Trouve des chaînes sur les prisons"
 
-    # ===========================
-    # ANALYSES GLOBALES
-    # ===========================
-    elif categorie == "📊 Analyses globales":
-        st.markdown("### 📊 Statistiques")
+        st.markdown("#### 📊 Analyses globales")
 
-        if st.button("📊 Liste personnes", key="liste", use_container_width=True):
+        if st.button("📋 Liste personnes", key="liste", use_container_width=True):
             st.session_state.pending_query = "Quelles personnes sont disponibles ?"
-        if st.button("🌐 Acteurs principaux", key="acteurs_principaux", use_container_width=True):
+
+        if st.button("🌐 Acteurs principaux", key="acteurs", use_container_width=True):
             st.session_state.pending_query = "Acteurs principaux du réseau ?"
-        if st.button("⏱️ Réactivité", key="reactivite", use_container_width=True):
+
+        if st.button("⏱️ Réactivité", key="react", use_container_width=True):
             st.session_state.pending_query = "Quelle est la réactivité des autorités suisses ?"
 
-    # ===========================
-    # COMPARAISONS
-    # ===========================
-    elif categorie == "⚖️ Comparaisons":
-        st.markdown("### ⚖️ Comparaisons")
+        st.markdown("#### ⚖️ Comparaisons")
 
         if st.button("⚖️ Müller vs Nussbaumer", key="comp1", use_container_width=True):
             st.session_state.pending_query = "Compare Elisabeth Müller et Marcel Nussbaumer"
+
         if st.button("⚖️ Müller vs de Pury", key="comp2", use_container_width=True):
             st.session_state.pending_query = "Quelles sont les différences entre Elisabeth Müller et Gérard de Pury ?"
 
     st.divider()
 
     # ===========================
-    # OPTIONS
+    # 📊 PROGRESSION (COLLAPSIBLE)
     # ===========================
-    with st.expander("⚙️ Options"):
-        st.session_state.show_debug = st.checkbox("🔍 Debug", value=st.session_state.show_debug)
-        if st.button("🗑️ Effacer"):
+    with st.expander("📊 Progression de l'import"):
+        sources_importees = 75
+        sources_total = 191
+        pourcentage = int((sources_importees / sources_total) * 100)
+
+        st.progress(pourcentage / 100)
+        st.caption(f"**{pourcentage}%** • {sources_importees}/{sources_total} sources")
+        st.caption("🎯 Objectif 100% : **14 novembre 2025**")
+
+    # ===========================
+    # ℹ️ À PROPOS (COLLAPSIBLE)
+    # ===========================
+    with st.expander("ℹ️ À propos du corpus"):
+        st.markdown("""
+        **Données actuelles** :
+        - 48 personnes documentées
+        - 202 micro-actions diplomatiques
+        - 75 documents d'archives
+        - 316 chunks vectorisés
+        - 13 outils de requête
+
+        **Technologies** :
+        - Neo4j Graph Database
+        - Claude Sonnet 4.5
+        - Langues : FR/DE/EN
+
+        **⏱️ Temps de réponse** : 15-45 sec
+        """)
+
+    st.divider()
+
+    # ===========================
+    # ⚙️ OPTIONS
+    # ===========================
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🗑️ Effacer", use_container_width=True):
             st.session_state.messages = []
             st.rerun()
+    with col2:
+        st.session_state.show_debug = st.checkbox("🔍 Debug", value=st.session_state.show_debug)
 
     st.divider()
 
     # ===========================
-    # PROGRESSION DE L'IMPORT (déplacée ici)
-    # ===========================
-    st.markdown("### 📊 Progression de l'import")
-
-    sources_importees = 75
-    sources_total = 191
-    pourcentage = int((sources_importees / sources_total) * 100)
-
-    st.progress(pourcentage / 100)
-    st.caption(f"**{pourcentage}%** • {sources_importees}/{sources_total} sources importées")
-    st.caption("🎯 Objectif 100% : **14 novembre 2025**")
-
-    st.divider()
-
-    # ===========================
-    # INFORMATIONS GÉNÉRALES (en bas)
-    # ===========================
-    st.markdown("### ℹ️ À propos")
-
-    st.markdown("""
-    **Corpus actuel** :
-    - 48 personnes documentées
-    - 202 micro-actions diplomatiques
-    - 75 documents d'archives
-    - 316 chunks vectorisés
-    - 13 outils de requête
-
-    **Technologies** :
-    - Neo4j Graph Database
-    - Claude Sonnet 4.5
-    - Langues : FR/DE/EN
-
-    **⏱️ Temps de réponse** : 15-45 sec
-    """)
-
-    st.divider()
-
-    # ===========================
-    # FOOTER (tout en bas)
+    # FOOTER COMPACT
     # ===========================
     st.markdown("""
-    <div style='font-size: 0.75em; color: #888;'>
-        <strong>GraphRAG Tools v0.1.3</strong><br>
-        Des modèles de langage au service<br>
-        des questions de recherche<br>
-        <br>
-        Archives diplomatiques 1940-1945<br>
-        <br>
-        <strong>Auteur:</strong> Gérard Bottazzoli<br>
-        <a href='mailto:gerard.bottazzoli@etu.unidistance.ch' style='font-size: 0.9em;'>gerard.bottazzoli@etu.unidistance.ch</a>
+    <div style='font-size: 0.7em; color: #888; text-align: center;'>
+        <strong>GraphRAG Tools v0.1.4</strong><br>
+        Gérard Bottazzoli<br>
+        <a href='mailto:gerard.bottazzoli@etu.unidistance.ch'>✉️ Contact</a>
     </div>
     """, unsafe_allow_html=True)
 
@@ -286,7 +262,7 @@ query_to_process = None
 # Priorité 1 : Query depuis bouton
 if "pending_query" in st.session_state and st.session_state.pending_query:
     query_to_process = st.session_state.pending_query
-    st.session_state.pending_query = None  # Clear immédiatement
+    st.session_state.pending_query = None
 
 # Priorité 2 : Input manuel
 elif user_input:

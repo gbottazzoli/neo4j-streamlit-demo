@@ -87,17 +87,6 @@ with st.sidebar:
     **Une approche historian-in-the-loop**
     """)
 
-    st.markdown("---")
-
-    # Barre de progression
-    sources_importees = 75
-    sources_total = 191
-    pourcentage = int((sources_importees / sources_total) * 100)
-
-    st.markdown("### 📊 Progression de l'import")
-    st.progress(pourcentage / 100)
-    st.caption(f"{pourcentage}% • {sources_importees}/{sources_total} sources importées")
-    st.caption("🎯 Objectif 100% : 14 novembre 2025")
 
     st.markdown("---")
 
@@ -151,8 +140,6 @@ with st.sidebar:
         st.markdown("**🔵 Elisabeth Müller**")
         if st.button("📖 Biographie", key="bio_muller", use_container_width=True):
             st.session_state.pending_query = "Donne-moi la biographie d'Elisabeth Müller"
-        if st.button("📅 Chronologie", key="chrono_muller", use_container_width=True):
-            st.session_state.pending_query = "Quelle est la chronologie d'Elisabeth Müller ?"
         if st.button("🎯 Parcours complet", key="parcours_muller", use_container_width=True):
             st.session_state.pending_query = "Décris le parcours de persécution d'Elisabeth Müller"
 
@@ -228,6 +215,21 @@ with st.sidebar:
         if st.button("🗑️ Effacer"):
             st.session_state.messages = []
             st.rerun()
+
+
+
+    st.markdown("---")
+
+    # Barre de progression
+    sources_importees = 75
+    sources_total = 191
+    pourcentage = int((sources_importees / sources_total) * 100)
+
+    st.markdown("### 📊 Progression de l'import")
+    st.progress(pourcentage / 100)
+    st.caption(f"{pourcentage}% • {sources_importees}/{sources_total} sources importées")
+    st.caption("🎯 Objectif 100% : 14 novembre 2025")
+
 
     # -------------------------
     # FOOTER DANS SIDEBAR (en bas, en petit)

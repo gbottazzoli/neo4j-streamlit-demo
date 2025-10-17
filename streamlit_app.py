@@ -20,6 +20,15 @@ st.set_page_config(
 # -------------------------
 st.title("🤖 Agent conversationnel sur Graph Neo4j")
 st.caption("Phase de test • Version 0.1.3")
+
+# -------------------------
+# DISCLAIMER EXPERIMENTAL
+# -------------------------
+st.info("""
+⚠️ **Phase expérimentale** : Les agents Neo4j Anthropic sont en cours de développement. 
+Si une requête ne fonctionne pas comme prévu, veuillez reformuler en précisant toujours le nom complet de la personne.
+""")
+
 st.divider()
 
 # -------------------------
@@ -70,34 +79,40 @@ if "show_debug" not in st.session_state:
     st.session_state.show_debug = False
 
 # -------------------------
-# Sidebar : Menu Unique
+# Sidebar : Menu Optimisé
 # -------------------------
 with st.sidebar:
-    # === HEADER SIDEBAR ===
-    st.markdown("---")
+    # ===========================
+    # HEADER : Titre du projet
+    # ===========================
+    st.markdown("### 🤖 Chatbot de démonstration")
 
-    # Titre du chatbot
     st.markdown("""
-    ### 🤖 Chatbot de démonstration
-
-    **Des archives fédérales à la base de données :**
+    **Des archives fédérales à la base de données**
 
     *Flux de travail numériques avec modèles de langage (locaux) et Graph RAG*
 
     **Une approche historian-in-the-loop**
     """)
 
-
     st.markdown("---")
 
-    # Guide des requêtes
+    # ===========================
+    # GUIDE DES REQUÊTES
+    # ===========================
     st.header("📖 Guide des Requêtes")
     st.caption("Clique sur un exemple pour le tester")
+
+    st.markdown("""
+    💡 **Conseil important** : Répétez toujours le nom complet dans vos questions pour éviter les ambiguïtés.
+
+    ✅ "Détails sur 1942 pour Elisabeth Müller"  
+    ❌ "Détails sur 1942" (peut perdre le contexte)
+    """)
 
     categorie = st.selectbox(
         "🎯 Choisir une fonctionnalité",
         [
-            "👋 Bienvenue",
             "📚 Parcours individuels",
             "🔗 Chaînes de communication",
             "🔍 Recherche thématique",
@@ -109,32 +124,9 @@ with st.sidebar:
     st.divider()
 
     # ===========================
-    # BIENVENUE
-    # ===========================
-    if categorie == "👋 Bienvenue":
-        st.markdown("""
-        ### Bienvenue ! 👋
-
-        Interrogez **1410 nœuds** d'archives diplomatiques suisses (1940-1945).
-
-        **🎯 À tester** :
-        - Parcours individuels
-        - Chaînes de communication
-        - Recherche thématique
-
-        **📊 Corpus** :
-        - 48 personnes
-        - 202 micro-actions
-        - 75 documents
-        - 316 chunks vectorisés
-
-        **⏱️ Temps** : 15-45 sec
-        """)
-
-    # ===========================
     # PARCOURS INDIVIDUELS
     # ===========================
-    elif categorie == "📚 Parcours individuels":
+    if categorie == "📚 Parcours individuels":
         st.markdown("### 📚 Parcours de persécution")
 
         st.markdown("**🔵 Elisabeth Müller**")
@@ -209,32 +201,58 @@ with st.sidebar:
 
     st.divider()
 
-    # Options
+    # ===========================
+    # OPTIONS
+    # ===========================
     with st.expander("⚙️ Options"):
         st.session_state.show_debug = st.checkbox("🔍 Debug", value=st.session_state.show_debug)
         if st.button("🗑️ Effacer"):
             st.session_state.messages = []
             st.rerun()
 
+    st.divider()
 
+    # ===========================
+    # PROGRESSION DE L'IMPORT (déplacée ici)
+    # ===========================
+    st.markdown("### 📊 Progression de l'import")
 
-    st.markdown("---")
-
-    # Barre de progression
     sources_importees = 75
     sources_total = 191
     pourcentage = int((sources_importees / sources_total) * 100)
 
-    st.markdown("### 📊 Progression de l'import")
     st.progress(pourcentage / 100)
-    st.caption(f"{pourcentage}% • {sources_importees}/{sources_total} sources importées")
-    st.caption("🎯 Objectif 100% : 14 novembre 2025")
+    st.caption(f"**{pourcentage}%** • {sources_importees}/{sources_total} sources importées")
+    st.caption("🎯 Objectif 100% : **14 novembre 2025**")
 
-
-    # -------------------------
-    # FOOTER DANS SIDEBAR (en bas, en petit)
-    # -------------------------
     st.divider()
+
+    # ===========================
+    # INFORMATIONS GÉNÉRALES (en bas)
+    # ===========================
+    st.markdown("### ℹ️ À propos")
+
+    st.markdown("""
+    **Corpus actuel** :
+    - 48 personnes documentées
+    - 202 micro-actions diplomatiques
+    - 75 documents d'archives
+    - 316 chunks vectorisés
+    - 13 outils de requête
+
+    **Technologies** :
+    - Neo4j Graph Database
+    - Claude Sonnet 4.5
+    - Langues : FR/DE/EN
+
+    **⏱️ Temps de réponse** : 15-45 sec
+    """)
+
+    st.divider()
+
+    # ===========================
+    # FOOTER (tout en bas)
+    # ===========================
     st.markdown("""
     <div style='font-size: 0.75em; color: #888;'>
         <strong>GraphRAG Tools v0.1.3</strong><br>
@@ -244,10 +262,7 @@ with st.sidebar:
         Archives diplomatiques 1940-1945<br>
         <br>
         <strong>Auteur:</strong> Gérard Bottazzoli<br>
-        <a href='mailto:gerard.bottazzoli@etu.unidistance.ch' style='font-size: 0.9em;'>gerard.bottazzoli@etu.unidistance.ch</a><br>
-        <br>
-        <em>13 tools • FR/DE/EN<br>
-        Neo4j + Claude Sonnet 4.5</em>
+        <a href='mailto:gerard.bottazzoli@etu.unidistance.ch' style='font-size: 0.9em;'>gerard.bottazzoli@etu.unidistance.ch</a>
     </div>
     """, unsafe_allow_html=True)
 
@@ -261,7 +276,7 @@ for message in st.session_state.messages:
 # -------------------------
 # INPUT TOUJOURS EN PREMIER (critique!)
 # -------------------------
-user_input = st.chat_input("💬 Pose ta question ici... (ou clique sur un exemple dans le menu)")
+user_input = st.chat_input("💬 Pose ta question ici... (précisez toujours le nom complet de la personne)")
 
 # -------------------------
 # Traiter pending_query OU user_input

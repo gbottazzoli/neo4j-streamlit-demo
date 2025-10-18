@@ -1,5 +1,5 @@
 # streamlit_app.py
-# Version 0.1.4 - Interface GraphRAG Tools Diplomatiques - Ergonomie améliorée
+# Version 0.1.5 - Interface GraphRAG Tools Diplomatiques - Recherche sémantique
 # Auteur: Gérard Bottazzoli (gerard.bottazzoli@etu.unidistance.ch)
 
 import streamlit as st
@@ -10,7 +10,7 @@ from typing import Optional
 # Configuration page
 # -------------------------
 st.set_page_config(
-    page_title="Agent Neo4j Archives Suisses v0.1.4",
+    page_title="Agent Neo4j Archives Suisses v0.1.5",
     page_icon="🤖",
     layout="wide",
 )
@@ -19,7 +19,7 @@ st.set_page_config(
 # En-tête sobre
 # -------------------------
 st.title("🤖 Agent conversationnel sur Graph Neo4j")
-st.caption("Phase de test • Version 0.1.4")
+st.caption("Phase de test • Version 0.1.5")
 
 # -------------------------
 # DISCLAIMER EXPERIMENTAL
@@ -151,17 +151,35 @@ with st.sidebar:
 
         st.markdown("#### 🔍 Recherches thématiques")
 
-        if st.button("🔍 Möbellager (DE)", key="mobel", use_container_width=True):
-            st.session_state.pending_query = "Trouve des chaînes sur Möbellager"
+        st.caption("*Découverte de thèmes dans le corpus*")
 
-        if st.button("💰 Argent", key="argent", use_container_width=True):
+        if st.button("🔍 Conditions de détention", key="detention", use_container_width=True):
+            st.session_state.pending_query = "Trouve des documents sur les conditions de détention"
+
+        if st.button("📦 Garde-meuble (FR/DE)", key="garde_detail", use_container_width=True):
+            st.session_state.pending_query = "Y a-t-il des mentions de garde-meuble dans les archives ?"
+
+        if st.button("🚚 Frais de transport", key="transport", use_container_width=True):
+            st.session_state.pending_query = "Trouve des documents sur les frais de transport"
+
+        if st.button("💰 Questions d'argent", key="argent", use_container_width=True):
             st.session_state.pending_query = "Trouve des chaînes mentionnant de l'argent"
 
         if st.button("⚖️ Condamnations", key="condamn", use_container_width=True):
             st.session_state.pending_query = "Trouve des infos sur les condamnations"
 
-        if st.button("🔐 Prisons", key="prison", use_container_width=True):
-            st.session_state.pending_query = "Trouve des chaînes sur les prisons"
+        if st.button("🏛️ Prisons", key="prison", use_container_width=True):
+            st.session_state.pending_query = "Trouve des documents qui parlent de prison"
+
+        st.markdown("#### 📗 Reconstitution thématique")
+
+        st.caption("*Micro-actions filtrées par thème*")
+
+        if st.button("📗 Müller sur garde-meuble", key="recon_garde", use_container_width=True):
+            st.session_state.pending_query = "Reconstitue la chaîne pour Elisabeth Müller sur garde-meuble entre 1942 et 1945"
+
+        if st.button("📗 Müller sur détention 1943", key="recon_det", use_container_width=True):
+            st.session_state.pending_query = "Reconstitue la chaîne pour Elisabeth Müller sur détention en 1943"
 
         st.markdown("#### 📊 Analyses globales")
 
@@ -205,15 +223,16 @@ with st.sidebar:
         - 48 personnes documentées
         - 202 micro-actions diplomatiques
         - 75 documents d'archives
-        - 316 chunks vectorisés
-        - 13 outils de requête
+        - 366 chunks vectorisés (275 docs + 91 entités)
+        - 12 outils de requête
 
         **Technologies** :
         - Neo4j Graph Database
         - Claude Sonnet 4.5
+        - Vertex AI Embeddings (768D)
         - Langues : FR/DE/EN
 
-        **⏱️ Temps de réponse** : 15-45 sec
+        **⏱️ Temps de réponse** : 15-60 sec
         """)
 
     st.divider()
@@ -236,7 +255,7 @@ with st.sidebar:
     # ===========================
     st.markdown("""
     <div style='font-size: 0.7em; color: #888; text-align: center;'>
-        <strong>GraphRAG Tools v0.1.4</strong><br>
+        <strong>GraphRAG Tools v0.1.5</strong><br>
         Gérard Bottazzoli<br>
         <a href='mailto:gerard.bottazzoli@etu.unidistance.ch'>✉️ Contact</a>
     </div>
@@ -280,7 +299,7 @@ if query_to_process:
 
     # Appeler l'API
     with st.chat_message("assistant"):
-        with st.spinner("🔎 Recherche en cours... (15-45 sec)"):
+        with st.spinner("🔎 Recherche en cours... (15-60 sec)"):
 
             bearer_token = get_bearer_token(CLIENT_ID, CLIENT_SECRET)
 
@@ -298,7 +317,7 @@ if query_to_process:
                             'Authorization': f'Bearer {bearer_token}'
                         },
                         json={'input': query_to_process},
-                        timeout=60
+                        timeout=90  # Augmenté à 90s pour recherche sémantique
                     )
 
                     if response.status_code == 200:
@@ -334,7 +353,7 @@ if query_to_process:
                         st.session_state.messages.append({"role": "assistant", "content": error_msg})
 
                 except requests.Timeout:
-                    timeout_msg = "⏱️ Timeout (>60 sec)."
+                    timeout_msg = "⏱️ Timeout (>90 sec). La recherche était peut-être trop complexe. Essayez de préciser l'année ou le thème."
                     st.warning(timeout_msg)
                     st.session_state.messages.append({"role": "assistant", "content": timeout_msg})
 

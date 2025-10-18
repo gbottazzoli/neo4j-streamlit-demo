@@ -1,5 +1,5 @@
 # streamlit_app.py
-# Version 0.1.5 - Interface GraphRAG Tools Diplomatiques - Recherche sémantique
+# Version 0.2.0 - Interface GraphRAG Tools Diplomatiques - Sans mémoire conversationnelle
 # Auteur: Gérard Bottazzoli (gerard.bottazzoli@etu.unidistance.ch)
 
 import streamlit as st
@@ -10,7 +10,7 @@ from typing import Optional
 # Configuration page
 # -------------------------
 st.set_page_config(
-    page_title="Agent Neo4j Archives Suisses v0.1.5",
+    page_title="Agent Neo4j Archives Suisses v0.2.0",
     page_icon="🤖",
     layout="wide",
 )
@@ -19,14 +19,16 @@ st.set_page_config(
 # En-tête sobre
 # -------------------------
 st.title("🤖 Agent conversationnel sur Graph Neo4j")
-st.caption("Phase de test • Version 0.1.5")
+st.caption("Phase de test • Version 0.2.0")
 
 # -------------------------
 # DISCLAIMER EXPERIMENTAL
 # -------------------------
 st.info("""
-⚠️ **Phase expérimentale** : Les agents Neo4j Anthropic sont en cours de développement. 
-Si une requête ne fonctionne pas comme prévu, veuillez reformuler en précisant toujours le nom complet de la personne.
+⚠️ **Phase expérimentale** : Les agents Neo4j ne conservent pas le contexte entre messages. 
+**Chaque question doit contenir toutes les informations nécessaires** (nom complet de la personne, année, thème).
+
+💡 **Conseil** : Utilisez les boutons de la barre latérale pour des requêtes complètes et optimisées.
 """)
 
 st.divider()
@@ -79,7 +81,7 @@ if "show_debug" not in st.session_state:
     st.session_state.show_debug = False
 
 # -------------------------
-# Sidebar : Menu Optimisé v2
+# Sidebar : Menu Optimisé v3 (Sans mémoire)
 # -------------------------
 with st.sidebar:
     # ===========================
@@ -94,10 +96,14 @@ with st.sidebar:
     # 💡 CONSEIL PRINCIPAL
     # ===========================
     st.markdown("""
-    💡 **Toujours préciser le nom complet**
+    💡 **Principe : Requêtes autonomes**
+
+    L'agent **ne conserve pas le contexte** entre messages.
 
     ✅ "Détails sur 1942 pour Elisabeth Müller"  
-    ❌ "Détails sur 1942" (peut perdre le contexte)
+    ❌ "Détails sur 1942" (manque le nom)
+
+    **Utilisez les boutons ci-dessous pour des requêtes complètes !**
     """)
 
     st.divider()
@@ -116,10 +122,10 @@ with st.sidebar:
     if st.button("📊 Chaîne communication Müller", key="quick_chaine", use_container_width=True):
         st.session_state.pending_query = "Chaîne de communication pour Elisabeth Müller"
 
-    if st.button("📅 Détails 1942 Müller", key="quick_1942", use_container_width=True):
-        st.session_state.pending_query = "Montre-moi les détails de 1942 pour Elisabeth Müller"
+    if st.button("📅 Avril 1942 Müller", key="quick_1942", use_container_width=True):
+        st.session_state.pending_query = "Détails sur avril 1942 pour Elisabeth Müller"
 
-    if st.button("🔍 Garde-meuble", key="quick_garde", use_container_width=True):
+    if st.button("🔍 Thème garde-meuble", key="quick_garde", use_container_width=True):
         st.session_state.pending_query = "Trouve des infos sur les frais de garde-meuble"
 
     st.divider()
@@ -141,13 +147,31 @@ with st.sidebar:
 
         st.markdown("#### 📅 Périodes spécifiques")
 
+        st.caption("*1942*")
         col1, col2 = st.columns(2)
         with col1:
             if st.button("📅 Avril 1942", key="avril_42", use_container_width=True):
                 st.session_state.pending_query = "Détails sur avril 1942 pour Elisabeth Müller"
         with col2:
-            if st.button("📅 Année 1943", key="annee_43", use_container_width=True):
-                st.session_state.pending_query = "Montre-moi 1943 pour Elisabeth Müller"
+            if st.button("📅 Mai 1942", key="mai_42", use_container_width=True):
+                st.session_state.pending_query = "Détails sur mai 1942 pour Elisabeth Müller"
+
+        st.caption("*1943*")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("📅 Janvier 1943", key="janv_43", use_container_width=True):
+                st.session_state.pending_query = "Détails sur janvier 1943 pour Elisabeth Müller"
+        with col2:
+            if st.button("📅 Avril 1943", key="avril_43", use_container_width=True):
+                st.session_state.pending_query = "Détails sur avril 1943 pour Elisabeth Müller"
+
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("📅 Août 1943", key="aout_43", use_container_width=True):
+                st.session_state.pending_query = "Détails sur août 1943 pour Elisabeth Müller"
+        with col2:
+            if st.button("📅 Septembre 1943", key="sept_43", use_container_width=True):
+                st.session_state.pending_query = "Détails sur septembre 1943 pour Elisabeth Müller"
 
         st.markdown("#### 🔍 Recherches thématiques")
 
@@ -163,7 +187,7 @@ with st.sidebar:
             st.session_state.pending_query = "Trouve des documents sur les frais de transport"
 
         if st.button("💰 Questions d'argent", key="argent", use_container_width=True):
-            st.session_state.pending_query = "Trouve des chaînes mentionnant de l'argent"
+            st.session_state.pending_query = "Trouve des documents mentionnant de l'argent"
 
         if st.button("⚖️ Condamnations", key="condamn", use_container_width=True):
             st.session_state.pending_query = "Trouve des infos sur les condamnations"
@@ -173,13 +197,19 @@ with st.sidebar:
 
         st.markdown("#### 📗 Reconstitution thématique")
 
-        st.caption("*Micro-actions filtrées par thème*")
+        st.caption("*Micro-actions filtrées par thème et année*")
 
-        if st.button("📗 Müller sur garde-meuble", key="recon_garde", use_container_width=True):
-            st.session_state.pending_query = "Reconstitue la chaîne pour Elisabeth Müller sur garde-meuble entre 1942 et 1945"
+        if st.button("📗 Müller garde-meuble 1943", key="recon_garde_43", use_container_width=True):
+            st.session_state.pending_query = "Reconstitue la chaîne pour Elisabeth Müller sur garde-meuble en 1943"
 
-        if st.button("📗 Müller sur détention 1943", key="recon_det", use_container_width=True):
-            st.session_state.pending_query = "Reconstitue la chaîne pour Elisabeth Müller sur détention en 1943"
+        if st.button("📗 Müller garde-meuble 1944", key="recon_garde_44", use_container_width=True):
+            st.session_state.pending_query = "Reconstitue la chaîne pour Elisabeth Müller sur garde-meuble en 1944"
+
+        if st.button("📗 Müller prison 1943", key="recon_det_43", use_container_width=True):
+            st.session_state.pending_query = "Reconstitue la chaîne pour Elisabeth Müller sur prison|haft|détention en 1943"
+
+        if st.button("📗 Müller argent 1942", key="recon_argent_42", use_container_width=True):
+            st.session_state.pending_query = "Reconstitue la chaîne pour Elisabeth Müller sur argent en 1942"
 
         st.markdown("#### 📊 Analyses globales")
 
@@ -233,6 +263,8 @@ with st.sidebar:
         - Langues : FR/DE/EN
 
         **⏱️ Temps de réponse** : 15-60 sec
+
+        **⚠️ Limitation actuelle** : Pas de mémoire conversationnelle (agents expérimentaux)
         """)
 
     st.divider()
@@ -255,7 +287,7 @@ with st.sidebar:
     # ===========================
     st.markdown("""
     <div style='font-size: 0.7em; color: #888; text-align: center;'>
-        <strong>GraphRAG Tools v0.1.5</strong><br>
+        <strong>GraphRAG Tools v0.2.0</strong><br>
         Gérard Bottazzoli<br>
         <a href='mailto:gerard.bottazzoli@etu.unidistance.ch'>✉️ Contact</a>
     </div>
@@ -271,7 +303,7 @@ for message in st.session_state.messages:
 # -------------------------
 # INPUT TOUJOURS EN PREMIER (critique!)
 # -------------------------
-user_input = st.chat_input("💬 Pose ta question ici... (précisez toujours le nom complet de la personne)")
+user_input = st.chat_input("💬 Pose ta question ici (avec nom complet + contexte, ex: 'Détails sur 1942 pour Müller')")
 
 # -------------------------
 # Traiter pending_query OU user_input
@@ -317,7 +349,7 @@ if query_to_process:
                             'Authorization': f'Bearer {bearer_token}'
                         },
                         json={'input': query_to_process},
-                        timeout=90  # Augmenté à 90s pour recherche sémantique
+                        timeout=90  # Augmenté à 90s pour recherches complexes
                     )
 
                     if response.status_code == 200:
@@ -353,7 +385,7 @@ if query_to_process:
                         st.session_state.messages.append({"role": "assistant", "content": error_msg})
 
                 except requests.Timeout:
-                    timeout_msg = "⏱️ Timeout (>90 sec). La recherche était peut-être trop complexe. Essayez de préciser l'année ou le thème."
+                    timeout_msg = "⏱️ Timeout (>90 sec). Essayez une requête plus précise (année spécifique, un seul thème)."
                     st.warning(timeout_msg)
                     st.session_state.messages.append({"role": "assistant", "content": timeout_msg})
 

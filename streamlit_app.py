@@ -22,10 +22,19 @@ st.title("🤖 Agent conversationnel sur Graph Neo4j")
 st.caption("Phase de test • Version 0.2.0")
 
 # -------------------------
-# DISCLAIMER EXPERIMENTAL
+# BANNIÈRE DE SUCCÈS
 # -------------------------
+st.success("""
+✅ **Import terminé !** Les **192 sources** (100%) ont été scannées et intégrées dans le graphe.
+
+📊 **Métriques du graphe** :
+- **3 117 nœuds** | **12 296 relations**
+- 48 personnes documentées | 202 micro-actions diplomatiques
+- 192 documents d'archives | 366 chunks vectorisés
+""")
+
 st.info("""
-⚠️ **Phase expérimentale** : Les agents Neo4j ne conservent pas le contexte entre messages. 
+⚠️ **Phase expérimentale** : Les agents Neo4j ne conservent pas le contexte entre messages.
 **Chaque question doit contenir toutes les informations nécessaires** (nom complet de la personne, année, thème).
 
 💡 **Conseil** : Utilisez les boutons de la barre latérale pour des requêtes complètes et optimisées.
@@ -236,13 +245,13 @@ with st.sidebar:
     # 📊 PROGRESSION (COLLAPSIBLE)
     # ===========================
     with st.expander("📊 Progression de l'import"):
-        sources_importees = 75
-        sources_total = 191
-        pourcentage = int((sources_importees / sources_total) * 100)
+        sources_importees = 192
+        sources_total = 192
+        pourcentage = 100
 
-        st.progress(pourcentage / 100)
+        st.progress(1.0)
         st.caption(f"**{pourcentage}%** • {sources_importees}/{sources_total} sources")
-        st.caption("🎯 Objectif 100% : **14 novembre 2025**")
+        st.caption("✅ **Import terminé !**")
 
     # ===========================
     # ℹ️ À PROPOS (COLLAPSIBLE)
@@ -250,9 +259,11 @@ with st.sidebar:
     with st.expander("ℹ️ À propos du corpus"):
         st.markdown("""
         **Données actuelles** :
+        - **3 117 nœuds** dans le graphe
+        - **12 296 relations** entre entités
         - 48 personnes documentées
         - 202 micro-actions diplomatiques
-        - 75 documents d'archives
+        - 192 documents d'archives (100% importés)
         - 366 chunks vectorisés (275 docs + 91 entités)
         - 12 outils de requête
 
